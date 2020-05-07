@@ -1,10 +1,11 @@
 import Formatter, { FormatterInterface } from './formatter';
 import ConsoleAppender from './console_appender';
-import { LevelEnum, LevelStr, AppenderInterface } from './index.d';
+import { LevelEnum, LevelStr } from './index.d';
+import Appender from './appender';
 
 class Logger {
   private level: LevelStr;
-  private appender: AppenderInterface[];
+  private appender: Appender[];
   private formatter: FormatterInterface;
   private reqId!: string;
   private entryTime!: number;
@@ -13,12 +14,12 @@ class Logger {
     level = 'info',
     formatter = new Formatter(),
     name,
-    appender = new ConsoleAppender(),
+    appender = new ConsoleAppender({ threshold: 'info' }),
   }: {
     level?: LevelStr;
     fileName?: string;
     name: string;
-    appender?: AppenderInterface;
+    appender?: Appender;
     formatter?: FormatterInterface;
   }) {
     this.level = level;
@@ -47,10 +48,8 @@ class Logger {
     Logger.instance.delete(name);
   }
 
-  private canLog(level: LevelStr) {
-    if (
-      Logger.levelOrder.indexOf(level) >= Logger.levelOrder.indexOf(this.level)
-    ) {
+  static canLog(input: LevelStr, exist: LevelStr) {
+    if (Logger.levelOrder.indexOf(input) >= Logger.levelOrder.indexOf(exist)) {
       return true;
     }
     return false;
@@ -68,20 +67,22 @@ class Logger {
       error?: Error;
     },
   ) {
-    if (this.canLog(level)) {
+    if (Logger.canLog(level, this.level)) {
       this.appender.forEach(appender => {
-        const str: string = this.formatter.out({
-          messages,
-          error,
-          level,
-          pattern,
-          requestId: this.reqId,
-          requestEntryTime: this.entryTime,
-        });
-        if (error) {
-          appender.errorAppend(str);
-        } else {
-          appender.append(str);
+        if (Logger.canLog(level, appender.getThreshold())) {
+          const str: string = this.formatter.out({
+            messages,
+            error,
+            level,
+            pattern,
+            requestId: this.reqId,
+            requestEntryTime: this.entryTime,
+          });
+          if (error) {
+            appender.errorAppend(str);
+          } else {
+            appender.append(str);
+          }
         }
       });
     }
@@ -197,11 +198,11 @@ class Logger {
     this.formatter = formatter;
   }
 
-  addAppender(appender: AppenderInterface) {
+  addAppender(appender: Appender) {
     this.appender.push(appender);
   }
 
-  setAppender(appender: AppenderInterface) {
+  setAppender(appender: Appender) {
     this.appender = [appender];
   }
 

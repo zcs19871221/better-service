@@ -1,8 +1,9 @@
 import * as fs from 'better-fs';
-import { AppenderInterface } from './index.d';
+import Appender from './appender';
 import Logger from '.';
+import { LevelStr } from './index.d';
 
-export default class FileAppender implements AppenderInterface {
+export default class FileAppender extends Appender {
   private errorLocate: string;
   private locate: string;
   private commonStream: fs.WriteStream;
@@ -10,28 +11,34 @@ export default class FileAppender implements AppenderInterface {
   private keepLogNum: number;
   private rotateInterval: number;
   private thresholdSize: number;
-  private timer: NodeJS.Timeout;
+  private timer: NodeJS.Timeout | null = null;
   constructor({
     errorLocate,
     locate,
     keepLogNum = 4,
     thresholdSize = 50 * 1024 * 1024,
     rotateInterval = 24 * 60 * 60 * 1000,
+    threshold,
   }: {
     errorLocate: string;
     keepLogNum?: number;
     rotateInterval?: number;
     thresholdSize?: number;
     locate: string;
+    threshold: LevelStr;
   }) {
+    super({ threshold });
     this.locate = locate;
     this.errorLocate = errorLocate;
-    this.commonStream = fs.createWriteStream(this.locate, { flags: 'a' });
-    this.errorStream = fs.createWriteStream(this.errorLocate, { flags: 'a' });
+    this.commonStream = fs.createWriteStream(this.locate, {
+      flags: 'a',
+    });
+    this.errorStream = fs.createWriteStream(this.errorLocate, {
+      flags: 'a',
+    });
     this.keepLogNum = keepLogNum;
     this.thresholdSize = thresholdSize;
     this.rotateInterval = rotateInterval;
-    this.timer = this.start();
   }
 
   start() {
@@ -43,10 +50,12 @@ export default class FileAppender implements AppenderInterface {
   }
 
   stop() {
-    clearInterval(this.timer);
+    if (this.timer !== null) {
+      clearInterval(this.timer);
+    }
   }
 
-  private async rotate(fileLocate: string) {
+  async rotate(fileLocate: string) {
     const stat = await fs.lstat(fileLocate);
     if (stat.size > this.thresholdSize) {
       const logger = Logger.get();

@@ -8,7 +8,7 @@
   "dependencies": {
     "better-fs": "^11.0.4",
     "better-request": "^2.0.7",
-    "better-utils": "^3.0.2",
+    "better-utils": "^3.0.4",
     "express": "^4.17.1",
     "pm2": "^4.4.0"
   },

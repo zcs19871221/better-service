@@ -1,5 +1,5 @@
-import { AppenderInterface } from './index.d';
-export default class ConsoleAppender implements AppenderInterface {
+import Appender from './appender';
+export default class ConsoleAppender extends Appender {
   append(msg: string) {
     console.log(msg);
   }
