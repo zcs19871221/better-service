@@ -10,7 +10,7 @@
     "better-request": "^2.0.7",
     "better-utils": "^3.0.4",
     "express": "^4.17.1",
-    "pm2": "^4.4.0"
+    "pm2": "^5.2.0"
   },
   "scripts": {
     "analyze": "node --inspect=0.0.0.0:9229 dist/index.js",
